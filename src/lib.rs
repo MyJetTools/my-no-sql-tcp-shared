@@ -1,11 +1,9 @@
 pub mod common_deserializers;
 pub mod common_serializers;
 mod delete_row_tcp_contract;
-mod error;
-mod socket_reader;
 mod tcp_contracts;
 pub mod tcp_packets;
+mod tcp_serializer;
 pub use delete_row_tcp_contract::DeleteRowTcpContract;
-pub use error::ReadingTcpContractFail;
-pub use socket_reader::{SocketReader, TSocketReader};
 pub use tcp_contracts::TcpContract;
+pub use tcp_serializer::MyNoSqlReaderTcpSerializer;

@@ -1,4 +1,4 @@
-use crate::{ReadingTcpContractFail, TSocketReader};
+use my_tcp_sockets::socket_reader::{ReadingTcpContractFail, SocketReader};
 
 pub struct DeleteRowTcpContract {
     pub partition_key: String,
@@ -6,8 +6,8 @@ pub struct DeleteRowTcpContract {
 }
 
 impl DeleteRowTcpContract {
-    pub async fn deserialize<T: TSocketReader>(
-        socket_reader: &mut T,
+    pub async fn deserialize<TSocketReader: SocketReader>(
+        socket_reader: &mut TSocketReader,
     ) -> Result<Self, ReadingTcpContractFail> {
         let partition_key = crate::common_deserializers::read_pascal_string(socket_reader).await?;
         let row_key = crate::common_deserializers::read_pascal_string(socket_reader).await?;

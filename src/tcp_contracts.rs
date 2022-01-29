@@ -1,6 +1,6 @@
-use crate::{
-    socket_reader::TSocketReader, tcp_packets::*, DeleteRowTcpContract, ReadingTcpContractFail,
-};
+use my_tcp_sockets::socket_reader::{ReadingTcpContractFail, SocketReader};
+
+use crate::{tcp_packets::*, DeleteRowTcpContract};
 
 pub enum TcpContract {
     Ping,
@@ -31,8 +31,8 @@ pub enum TcpContract {
 }
 
 impl TcpContract {
-    pub async fn deserialize<GTSocketReader: TSocketReader>(
-        socket_reader: &mut GTSocketReader,
+    pub async fn deserialize<TSocketReader: SocketReader>(
+        socket_reader: &mut TSocketReader,
     ) -> Result<TcpContract, ReadingTcpContractFail> {
         let packet_no = socket_reader.read_byte().await?;
 

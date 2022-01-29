@@ -1,7 +1,7 @@
-use super::{ReadingTcpContractFail, TSocketReader};
+use my_tcp_sockets::socket_reader::{ReadingTcpContractFail, SocketReader};
 
-pub async fn read_pascal_string<T: TSocketReader>(
-    reader: &mut T,
+pub async fn read_pascal_string<TSocketReader: SocketReader>(
+    reader: &mut TSocketReader,
 ) -> Result<String, ReadingTcpContractFail> {
     let size = reader.read_byte().await? as usize;
 
