@@ -24,7 +24,7 @@ impl TcpSocketSerializer<TcpContract> for MyNoSqlReaderTcpSerializer {
         TcpContract::deserialize(socket_reader).await
     }
 
-    fn apply_packet(&mut self, contract: &TcpContract) -> bool {
+    fn apply_packet(&mut self, _: &TcpContract) -> bool {
         false
     }
 }
