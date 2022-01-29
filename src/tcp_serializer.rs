@@ -7,6 +7,12 @@ use crate::TcpContract;
 
 pub struct MyNoSqlReaderTcpSerializer {}
 
+impl MyNoSqlReaderTcpSerializer {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 #[async_trait::async_trait]
 impl TcpSocketSerializer<TcpContract> for MyNoSqlReaderTcpSerializer {
     fn serialize(&self, contract: TcpContract) -> Vec<u8> {
