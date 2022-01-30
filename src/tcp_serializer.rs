@@ -19,6 +19,10 @@ impl TcpSocketSerializer<TcpContract> for MyNoSqlReaderTcpSerializer {
         contract.serialize()
     }
 
+    fn serialize_ref(&self, contract: &TcpContract) -> Vec<u8> {
+        contract.serialize()
+    }
+
     fn get_ping(&self) -> TcpContract {
         TcpContract::Ping
     }
