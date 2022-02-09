@@ -93,10 +93,13 @@ impl TcpContract {
 
         return result;
     }
-
     pub fn serialize(&self) -> Vec<u8> {
         let mut buffer = Vec::new();
+        self.serialize_into(&mut buffer);
+        buffer
+    }
 
+    pub fn serialize_into(&self, buffer: &mut Vec<u8>) {
         match self {
             TcpContract::Ping => {
                 buffer.push(PING);
@@ -106,16 +109,16 @@ impl TcpContract {
             }
             TcpContract::Greeting { name } => {
                 buffer.push(GREETING);
-                crate::common_serializers::serialize_pascal_string(&mut buffer, name);
+                crate::common_serializers::serialize_pascal_string(buffer, name);
             }
             TcpContract::Subscribe { table_name } => {
                 buffer.push(SUBSCRIBE);
-                crate::common_serializers::serialize_pascal_string(&mut buffer, table_name);
+                crate::common_serializers::serialize_pascal_string(buffer, table_name);
             }
             TcpContract::InitTable { table_name, data } => {
                 buffer.push(INIT_TABLE);
-                crate::common_serializers::serialize_pascal_string(&mut buffer, table_name);
-                crate::common_serializers::serialize_byte_array(&mut buffer, data.as_slice());
+                crate::common_serializers::serialize_pascal_string(buffer, table_name);
+                crate::common_serializers::serialize_byte_array(buffer, data.as_slice());
             }
             TcpContract::InitPartition {
                 table_name,
@@ -123,26 +126,24 @@ impl TcpContract {
                 data,
             } => {
                 buffer.push(INIT_PARTITION);
-                crate::common_serializers::serialize_pascal_string(&mut buffer, table_name);
-                crate::common_serializers::serialize_pascal_string(&mut buffer, partition_key);
-                crate::common_serializers::serialize_byte_array(&mut buffer, data.as_slice());
+                crate::common_serializers::serialize_pascal_string(buffer, table_name);
+                crate::common_serializers::serialize_pascal_string(buffer, partition_key);
+                crate::common_serializers::serialize_byte_array(buffer, data.as_slice());
             }
             TcpContract::UpdateRows { table_name, data } => {
                 buffer.push(UPDATE_ROWS);
-                crate::common_serializers::serialize_pascal_string(&mut buffer, table_name);
-                crate::common_serializers::serialize_byte_array(&mut buffer, data.as_slice());
+                crate::common_serializers::serialize_pascal_string(buffer, table_name);
+                crate::common_serializers::serialize_byte_array(buffer, data.as_slice());
             }
             TcpContract::DeleteRows { table_name, rows } => {
                 buffer.push(DELETE_ROWS);
-                crate::common_serializers::serialize_pascal_string(&mut buffer, table_name);
-                crate::common_serializers::serialize_i32(&mut buffer, rows.len() as i32);
+                crate::common_serializers::serialize_pascal_string(buffer, table_name);
+                crate::common_serializers::serialize_i32(buffer, rows.len() as i32);
 
                 for row in rows {
-                    row.serialize(&mut buffer);
+                    row.serialize(buffer);
                 }
             }
         }
-
-        buffer
     }
 }
