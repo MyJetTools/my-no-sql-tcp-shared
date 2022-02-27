@@ -28,6 +28,9 @@ pub enum TcpContract {
         table_name: String,
         rows: Vec<DeleteRowTcpContract>,
     },
+    Error {
+        message: String,
+    },
 }
 
 impl TcpContract {
@@ -88,6 +91,21 @@ impl TcpContract {
 
                 Ok(TcpContract::DeleteRows { table_name, rows })
             }
+            ERROR => {
+                let packet_version = socket_reader.read_byte().await?;
+
+                if packet_version != 0 {
+                    panic!(
+                        "Unexpected packet version. Version is: {}, but expected version is 0",
+                        packet_version
+                    );
+                }
+
+                let message =
+                    crate::common_deserializers::read_pascal_string(socket_reader).await?;
+
+                panic!("TCP protocol error: {}", message);
+            }
             _ => Err(ReadingTcpContractFail::InvalidPacketId(packet_no)),
         };
 
@@ -143,6 +161,12 @@ impl TcpContract {
                 for row in rows {
                     row.serialize(buffer);
                 }
+            }
+            TcpContract::Error { message } => {
+                buffer.push(ERROR);
+                // Version=0; Means we have one field - message;
+                buffer.push(0);
+                crate::common_serializers::serialize_pascal_string(buffer, message);
             }
         }
     }

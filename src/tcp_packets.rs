@@ -6,3 +6,4 @@ pub const INIT_TABLE: u8 = 4;
 pub const INIT_PARTITION: u8 = 5;
 pub const UPDATE_ROWS: u8 = 6;
 pub const DELETE_ROWS: u8 = 7;
+pub const ERROR: u8 = 8;
