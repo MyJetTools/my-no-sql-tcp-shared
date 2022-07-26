@@ -207,3 +207,12 @@ impl TcpContract {
         }
     }
 }
+
+impl my_tcp_sockets::tcp_connection::TcpContract for TcpContract {
+    fn is_pong(&self) -> bool {
+        match self {
+            TcpContract::Pong => true,
+            _ => false,
+        }
+    }
+}
