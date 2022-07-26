@@ -31,6 +31,12 @@ pub enum TcpContract {
     Error {
         message: String,
     },
+    //Version 0 - we have 2 fields. Name and Version;
+    GreetingFromNode {
+        version: u8,
+        node_location: String,
+        node_version: String,
+    },
 }
 
 impl TcpContract {
@@ -106,6 +112,28 @@ impl TcpContract {
 
                 panic!("TCP protocol error: {}", message);
             }
+            GREETING_FROM_NODE => {
+                let packet_version = socket_reader.read_byte().await?;
+
+                if packet_version != 0 {
+                    panic!(
+                        "Unexpected packet version. Version is: {}, but expected version is 0",
+                        packet_version
+                    );
+                }
+
+                let node_location =
+                    crate::common_deserializers::read_pascal_string(socket_reader).await?;
+
+                let node_version =
+                    crate::common_deserializers::read_pascal_string(socket_reader).await?;
+
+                Ok(TcpContract::GreetingFromNode {
+                    version: packet_version,
+                    node_location,
+                    node_version,
+                })
+            }
             _ => Err(ReadingTcpContractFail::InvalidPacketId(packet_no)),
         };
 
@@ -167,6 +195,17 @@ impl TcpContract {
                 // Version=0; Means we have one field - message;
                 buffer.push(0);
                 crate::common_serializers::serialize_pascal_string(buffer, message);
+            }
+
+            TcpContract::GreetingFromNode {
+                version,
+                node_location,
+                node_version,
+            } => {
+                buffer.push(GREETING_FROM_NODE);
+                buffer.push(*version);
+                crate::common_serializers::serialize_pascal_string(buffer, node_location);
+                crate::common_serializers::serialize_pascal_string(buffer, node_version);
             }
         }
     }
