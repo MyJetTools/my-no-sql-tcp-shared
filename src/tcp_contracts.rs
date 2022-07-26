@@ -31,9 +31,8 @@ pub enum TcpContract {
     Error {
         message: String,
     },
-    //Version 0 - we have 2 fields. Name and Version;
+
     GreetingFromNode {
-        version: u8,
         node_location: String,
         node_version: String,
     },
@@ -129,7 +128,6 @@ impl TcpContract {
                     crate::common_deserializers::read_pascal_string(socket_reader).await?;
 
                 Ok(TcpContract::GreetingFromNode {
-                    version: packet_version,
                     node_location,
                     node_version,
                 })
@@ -198,12 +196,11 @@ impl TcpContract {
             }
 
             TcpContract::GreetingFromNode {
-                version,
                 node_location,
                 node_version,
             } => {
                 buffer.push(GREETING_FROM_NODE);
-                buffer.push(*version);
+                buffer.push(0);
                 crate::common_serializers::serialize_pascal_string(buffer, node_location);
                 crate::common_serializers::serialize_pascal_string(buffer, node_version);
             }
