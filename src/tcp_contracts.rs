@@ -36,6 +36,7 @@ pub enum TcpContract {
     GreetingFromNode {
         node_location: String,
         node_version: String,
+        compress: bool,
     },
     SubscribeAsNode(String),
     Unsubscribe(String),
@@ -131,22 +132,21 @@ impl TcpContract {
             GREETING_FROM_NODE => {
                 let packet_version = socket_reader.read_byte().await?;
 
-                if packet_version != 0 {
-                    panic!(
-                        "Unexpected packet version. Version is: {}, but expected version is 0",
-                        packet_version
-                    );
-                }
-
+                let mut compress = false;
                 let node_location =
                     crate::common_deserializers::read_pascal_string(socket_reader).await?;
 
                 let node_version =
                     crate::common_deserializers::read_pascal_string(socket_reader).await?;
 
+                if packet_version > 0 {
+                    compress = socket_reader.read_bool().await?;
+                }
+
                 Ok(TcpContract::GreetingFromNode {
                     node_location,
                     node_version,
+                    compress,
                 })
             }
             SUBSCRIBE_AS_NODE => {
@@ -261,11 +261,20 @@ impl TcpContract {
             TcpContract::GreetingFromNode {
                 node_location,
                 node_version,
+                compress,
             } => {
-                buffer.push(GREETING_FROM_NODE);
-                buffer.push(0);
-                crate::common_serializers::serialize_pascal_string(buffer, node_location);
-                crate::common_serializers::serialize_pascal_string(buffer, node_version);
+                if *compress {
+                    buffer.push(GREETING_FROM_NODE);
+                    buffer.push(1);
+                    crate::common_serializers::serialize_pascal_string(buffer, node_location);
+                    crate::common_serializers::serialize_pascal_string(buffer, node_version);
+                    buffer.push(1);
+                } else {
+                    buffer.push(GREETING_FROM_NODE);
+                    buffer.push(0);
+                    crate::common_serializers::serialize_pascal_string(buffer, node_location);
+                    crate::common_serializers::serialize_pascal_string(buffer, node_version);
+                }
             }
 
             TcpContract::SubscribeAsNode(table_name) => {
