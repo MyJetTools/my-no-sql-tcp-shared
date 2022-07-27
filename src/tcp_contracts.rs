@@ -45,7 +45,7 @@ pub enum TcpContract {
 }
 
 impl TcpContract {
-    pub fn compress_if_make_sence_and_serialize(self) -> Vec<u8> {
+    pub fn compress_if_make_sence_and_serialize(&self) -> Vec<u8> {
         if let TcpContract::CompressedPayload(_) = self {
             panic!("You can not get compresed payload from compressed payload");
         }
