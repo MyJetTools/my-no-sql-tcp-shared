@@ -224,7 +224,7 @@ impl TcpContract {
                 node_location,
                 node_version,
             } => {
-                buffer.push(SUBSCRIBE_AS_NODE);
+                buffer.push(GREETING_FROM_NODE);
                 buffer.push(0);
                 crate::common_serializers::serialize_pascal_string(buffer, node_location);
                 crate::common_serializers::serialize_pascal_string(buffer, node_version);
