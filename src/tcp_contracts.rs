@@ -40,6 +40,19 @@ pub enum TcpContract {
     SubscribeAsNode(String),
     Unsubscribe(String),
     TableNotFound(String),
+    InitTableCompressed {
+        table_name: String,
+        data: Vec<u8>,
+    },
+    InitPartitionCompressed {
+        table_name: String,
+        partition_key: String,
+        data: Vec<u8>,
+    },
+    UpdateRowsCompressed {
+        table_name: String,
+        data: Vec<u8>,
+    },
 }
 
 impl TcpContract {
@@ -157,6 +170,31 @@ impl TcpContract {
                     super::common_deserializers::read_pascal_string(socket_reader).await?;
                 Ok(TcpContract::Unsubscribe(table_name))
             }
+            INIT_TABLE_COMPRESSED => {
+                let table_name =
+                    crate::common_deserializers::read_pascal_string(socket_reader).await?;
+                let data = socket_reader.read_byte_array().await?;
+                Ok(TcpContract::InitTableCompressed { table_name, data })
+            }
+            INIT_PARTITION_COMPRESSED => {
+                let table_name =
+                    crate::common_deserializers::read_pascal_string(socket_reader).await?;
+                let partition_key =
+                    crate::common_deserializers::read_pascal_string(socket_reader).await?;
+                let data = socket_reader.read_byte_array().await?;
+                Ok(TcpContract::InitPartitionCompressed {
+                    table_name,
+                    partition_key,
+                    data,
+                })
+            }
+            UPDATE_ROWS_COMPRESSED => {
+                let table_name =
+                    crate::common_deserializers::read_pascal_string(socket_reader).await?;
+
+                let data = socket_reader.read_byte_array().await?;
+                Ok(TcpContract::UpdateRowsCompressed { table_name, data })
+            }
             _ => Err(ReadingTcpContractFail::InvalidPacketId(packet_no)),
         };
 
@@ -249,6 +287,26 @@ impl TcpContract {
                 // Protocol version
                 buffer.push(0);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
+            }
+            TcpContract::InitTableCompressed { table_name, data } => {
+                buffer.push(INIT_TABLE_COMPRESSED);
+                crate::common_serializers::serialize_pascal_string(buffer, table_name);
+                crate::common_serializers::serialize_byte_array(buffer, data.as_slice());
+            }
+            TcpContract::InitPartitionCompressed {
+                table_name,
+                partition_key,
+                data,
+            } => {
+                buffer.push(INIT_PARTITION_COMPRESSED);
+                crate::common_serializers::serialize_pascal_string(buffer, table_name);
+                crate::common_serializers::serialize_pascal_string(buffer, partition_key);
+                crate::common_serializers::serialize_byte_array(buffer, data.as_slice());
+            }
+            TcpContract::UpdateRowsCompressed { table_name, data } => {
+                buffer.push(UPDATE_ROWS_COMPRESSED);
+                crate::common_serializers::serialize_pascal_string(buffer, table_name);
+                crate::common_serializers::serialize_byte_array(buffer, data.as_slice());
             }
         }
     }
