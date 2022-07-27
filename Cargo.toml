@@ -12,3 +12,4 @@ rust-extensions = { branch = "0.1.0", git = "https://github.com/MyJetTools/rust-
 tokio = { version = "*", features = ["full"] }
 tokio-util = "*"
 async-trait = "*"
+zip = "*"
