@@ -11,6 +11,4 @@ pub const GREETING_FROM_NODE: u8 = 9;
 pub const SUBSCRIBE_AS_NODE: u8 = 10;
 pub const TABLES_NOT_FOUND: u8 = 11;
 pub const UNSUBSCRIBE: u8 = 12;
-pub const INIT_TABLE_COMPRESSED: u8 = 13;
-pub const INIT_PARTITION_COMPRESSED: u8 = 14;
-pub const UPDATE_ROWS_COMPRESSED: u8 = 15;
+pub const COMPRESSED_PAYLOAD: u8 = 13;
