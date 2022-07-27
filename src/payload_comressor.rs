@@ -1,7 +1,7 @@
 use crate::vec_writer::VecWriter;
 use std::io::{Cursor, Read, Write};
 
-pub fn compress(payload: Vec<u8>) -> Result<Vec<u8>, zip::result::ZipError> {
+pub fn compress(payload: &[u8]) -> Result<Vec<u8>, zip::result::ZipError> {
     let mut writer = VecWriter::new();
 
     {
@@ -25,7 +25,7 @@ pub fn compress(payload: Vec<u8>) -> Result<Vec<u8>, zip::result::ZipError> {
     Ok(writer.buf)
 }
 
-pub fn decompress(payload: Vec<u8>) -> Result<Vec<u8>, zip::result::ZipError> {
+pub fn decompress(payload: &[u8]) -> Result<Vec<u8>, zip::result::ZipError> {
     let c = Cursor::new(payload.to_vec());
 
     let mut zip = zip::ZipArchive::new(c)?;

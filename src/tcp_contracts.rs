@@ -45,19 +45,26 @@ pub enum TcpContract {
 }
 
 impl TcpContract {
-    pub fn as_compressed_payload(&self) -> Self {
+    pub fn compress_if_make_sence_and_serialize(self) -> Vec<u8> {
         if let TcpContract::CompressedPayload(_) = self {
             panic!("You can not get compresed payload from compressed payload");
         }
 
-        let bytes = self.serialize();
+        let non_compressed = self.serialize();
 
-        Self::CompressedPayload(super::payload_comressor::compress(bytes).unwrap())
+        let compressed = super::payload_comressor::compress(non_compressed.as_slice()).unwrap();
+
+        if compressed.len() + 10 < non_compressed.len() {
+            Self::CompressedPayload(compressed).serialize()
+        } else {
+            non_compressed
+        }
     }
 
     pub async fn decompress_if_compressed(self) -> Result<Self, ReadingTcpContractFail> {
         if let TcpContract::CompressedPayload(payload) = self {
-            let uncompressed_payload = super::payload_comressor::compress(payload).unwrap();
+            let uncompressed_payload =
+                super::payload_comressor::decompress(payload.as_slice()).unwrap();
 
             let mut reader = SocketReaderInMem::new(uncompressed_payload);
 
