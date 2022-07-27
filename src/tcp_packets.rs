@@ -8,3 +8,6 @@ pub const UPDATE_ROWS: u8 = 6;
 pub const DELETE_ROWS: u8 = 7;
 pub const ERROR: u8 = 8;
 pub const GREETING_FROM_NODE: u8 = 9;
+pub const SUBSCRIBE_AS_NODE: u8 = 10;
+pub const TABLES_NOT_FOUND: u8 = 11;
+pub const UNSUBSCRIBE: u8 = 12;

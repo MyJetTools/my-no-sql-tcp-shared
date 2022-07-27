@@ -36,6 +36,15 @@ pub enum TcpContract {
         node_location: String,
         node_version: String,
     },
+    SubscribeAsNode {
+        tables: Vec<String>,
+    },
+    Unsubscribe {
+        tables: Vec<String>,
+    },
+    TablesNotFound {
+        tables: Vec<String>,
+    },
 }
 
 impl TcpContract {
@@ -132,6 +141,24 @@ impl TcpContract {
                     node_version,
                 })
             }
+            SUBSCRIBE_AS_NODE => {
+                // Version 0 = we read list of tables only
+                socket_reader.read_byte().await?;
+                let tables = super::common_deserializers::read_vec_of_string(socket_reader).await?;
+                Ok(TcpContract::SubscribeAsNode { tables })
+            }
+            TABLES_NOT_FOUND => {
+                // Version 0 = we read list of tables only
+                socket_reader.read_byte().await?;
+                let tables = super::common_deserializers::read_vec_of_string(socket_reader).await?;
+                Ok(TcpContract::TablesNotFound { tables })
+            }
+            UNSUBSCRIBE => {
+                // Version 0 = we read list of tables only
+                socket_reader.read_byte().await?;
+                let tables = super::common_deserializers::read_vec_of_string(socket_reader).await?;
+                Ok(TcpContract::Unsubscribe { tables })
+            }
             _ => Err(ReadingTcpContractFail::InvalidPacketId(packet_no)),
         };
 
@@ -199,10 +226,31 @@ impl TcpContract {
                 node_location,
                 node_version,
             } => {
-                buffer.push(GREETING_FROM_NODE);
+                buffer.push(SUBSCRIBE_AS_NODE);
                 buffer.push(0);
                 crate::common_serializers::serialize_pascal_string(buffer, node_location);
                 crate::common_serializers::serialize_pascal_string(buffer, node_version);
+            }
+
+            TcpContract::SubscribeAsNode { tables } => {
+                buffer.push(SUBSCRIBE_AS_NODE);
+                // Protocol version
+                buffer.push(0);
+                super::common_serializers::serialize_vec_of_string(buffer, tables.as_slice());
+            }
+
+            TcpContract::TablesNotFound { tables } => {
+                buffer.push(TABLES_NOT_FOUND);
+                // Protocol version
+                buffer.push(0);
+                super::common_serializers::serialize_vec_of_string(buffer, tables.as_slice());
+            }
+
+            TcpContract::Unsubscribe { tables } => {
+                buffer.push(UNSUBSCRIBE);
+                // Protocol version
+                buffer.push(0);
+                super::common_serializers::serialize_vec_of_string(buffer, tables.as_slice());
             }
         }
     }

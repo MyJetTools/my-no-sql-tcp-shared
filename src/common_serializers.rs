@@ -40,3 +40,10 @@ pub fn serialize_byte_array(data: &mut Vec<u8>, v: &[u8]) {
     serialize_i32(data, array_len);
     data.extend(v);
 }
+
+pub fn serialize_vec_of_string(buffer: &mut Vec<u8>, v: &[String]) {
+    super::common_serializers::serialize_i32(buffer, v.len() as i32);
+    for table in v {
+        crate::common_serializers::serialize_pascal_string(buffer, table.as_str());
+    }
+}
