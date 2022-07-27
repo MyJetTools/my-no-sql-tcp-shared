@@ -2,6 +2,7 @@ use my_tcp_sockets::socket_reader::{ReadingTcpContractFail, SocketReader};
 
 use crate::{tcp_packets::*, DeleteRowTcpContract};
 
+#[derive(Debug)]
 pub enum TcpContract {
     Ping,
     Pong,

@@ -1,5 +1,6 @@
 use my_tcp_sockets::socket_reader::{ReadingTcpContractFail, SocketReader};
 
+#[derive(Debug)]
 pub struct DeleteRowTcpContract {
     pub partition_key: String,
     pub row_key: String,
