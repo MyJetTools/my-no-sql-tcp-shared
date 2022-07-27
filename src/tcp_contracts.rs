@@ -54,12 +54,6 @@ impl TcpContract {
 
         let compressed = super::payload_comressor::compress(non_compressed.as_slice()).unwrap();
 
-        println!(
-            "Compressed size {}. NonCompressed size {}",
-            compressed.len(),
-            non_compressed.len()
-        );
-
         if compressed.len() + 10 < non_compressed.len() {
             Self::CompressedPayload(compressed).serialize()
         } else {
