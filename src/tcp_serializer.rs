@@ -19,10 +19,6 @@ impl TcpSocketSerializer<TcpContract> for MyNoSqlReaderTcpSerializer {
         contract.serialize()
     }
 
-    fn serialize_ref(&self, contract: &TcpContract) -> Vec<u8> {
-        contract.serialize()
-    }
-
     fn get_ping(&self) -> TcpContract {
         TcpContract::Ping
     }
@@ -32,9 +28,5 @@ impl TcpSocketSerializer<TcpContract> for MyNoSqlReaderTcpSerializer {
         socket_reader: &mut TSocketReader,
     ) -> Result<TcpContract, ReadingTcpContractFail> {
         TcpContract::deserialize(socket_reader).await
-    }
-
-    fn apply_packet(&mut self, _: &TcpContract) -> bool {
-        false
     }
 }
