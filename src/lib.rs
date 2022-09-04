@@ -6,6 +6,6 @@ mod tcp_contracts;
 pub mod tcp_packets;
 mod tcp_serializer;
 pub use delete_row_tcp_contract::DeleteRowTcpContract;
-pub use tcp_contracts::TcpContract;
+pub use tcp_contracts::MyNoSqlTcpContract;
 pub use tcp_serializer::MyNoSqlReaderTcpSerializer;
 mod vec_writer;

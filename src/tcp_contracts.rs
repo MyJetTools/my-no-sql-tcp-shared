@@ -3,7 +3,7 @@ use my_tcp_sockets::socket_reader::{ReadingTcpContractFail, SocketReader, Socket
 use crate::{tcp_packets::*, DeleteRowTcpContract};
 
 #[derive(Debug)]
-pub enum TcpContract {
+pub enum MyNoSqlTcpContract {
     Ping,
     Pong,
     Greeting {
@@ -44,9 +44,9 @@ pub enum TcpContract {
     CompressedPayload(Vec<u8>),
 }
 
-impl TcpContract {
+impl MyNoSqlTcpContract {
     pub fn compress_if_make_sence_and_serialize(&self) -> Vec<u8> {
-        if let TcpContract::CompressedPayload(_) = self {
+        if let Self::CompressedPayload(_) = self {
             panic!("You can not get compresed payload from compressed payload");
         }
 
@@ -62,7 +62,7 @@ impl TcpContract {
     }
 
     pub async fn decompress_if_compressed(self) -> Result<Self, ReadingTcpContractFail> {
-        if let TcpContract::CompressedPayload(payload) = self {
+        if let Self::CompressedPayload(payload) = self {
             let uncompressed_payload =
                 super::payload_comressor::decompress(payload.as_slice()).unwrap();
 
@@ -80,22 +80,22 @@ impl TcpContract {
         let packet_no = socket_reader.read_byte().await?;
 
         let result = match packet_no {
-            PING => Ok(TcpContract::Ping {}),
-            PONG => Ok(TcpContract::Pong {}),
+            PING => Ok(Self::Ping {}),
+            PONG => Ok(Self::Pong {}),
             GREETING => {
                 let name = crate::common_deserializers::read_pascal_string(socket_reader).await?;
-                Ok(TcpContract::Greeting { name })
+                Ok(Self::Greeting { name })
             }
             SUBSCRIBE => {
                 let table_name =
                     crate::common_deserializers::read_pascal_string(socket_reader).await?;
-                Ok(TcpContract::Subscribe { table_name })
+                Ok(Self::Subscribe { table_name })
             }
             INIT_TABLE => {
                 let table_name =
                     crate::common_deserializers::read_pascal_string(socket_reader).await?;
                 let data = socket_reader.read_byte_array().await?;
-                Ok(TcpContract::InitTable { table_name, data })
+                Ok(Self::InitTable { table_name, data })
             }
             INIT_PARTITION => {
                 let table_name =
@@ -103,7 +103,7 @@ impl TcpContract {
                 let partition_key =
                     crate::common_deserializers::read_pascal_string(socket_reader).await?;
                 let data = socket_reader.read_byte_array().await?;
-                Ok(TcpContract::InitPartition {
+                Ok(Self::InitPartition {
                     table_name,
                     partition_key,
                     data,
@@ -114,7 +114,7 @@ impl TcpContract {
                     crate::common_deserializers::read_pascal_string(socket_reader).await?;
 
                 let data = socket_reader.read_byte_array().await?;
-                Ok(TcpContract::UpdateRows { table_name, data })
+                Ok(Self::UpdateRows { table_name, data })
             }
             DELETE_ROWS => {
                 let table_name =
@@ -129,7 +129,7 @@ impl TcpContract {
                     rows.push(row);
                 }
 
-                Ok(TcpContract::DeleteRows { table_name, rows })
+                Ok(Self::DeleteRows { table_name, rows })
             }
             ERROR => {
                 let packet_version = socket_reader.read_byte().await?;
@@ -160,7 +160,7 @@ impl TcpContract {
                     compress = socket_reader.read_bool().await?;
                 }
 
-                Ok(TcpContract::GreetingFromNode {
+                Ok(Self::GreetingFromNode {
                     node_location,
                     node_version,
                     compress,
@@ -171,25 +171,25 @@ impl TcpContract {
                 socket_reader.read_byte().await?;
                 let table_name =
                     super::common_deserializers::read_pascal_string(socket_reader).await?;
-                Ok(TcpContract::SubscribeAsNode(table_name))
+                Ok(Self::SubscribeAsNode(table_name))
             }
             TABLES_NOT_FOUND => {
                 // Version 0 = we read table_name only
                 socket_reader.read_byte().await?;
                 let table_name =
                     super::common_deserializers::read_pascal_string(socket_reader).await?;
-                Ok(TcpContract::TableNotFound(table_name))
+                Ok(Self::TableNotFound(table_name))
             }
             UNSUBSCRIBE => {
                 // Version 0 = we read table_name only
                 socket_reader.read_byte().await?;
                 let table_name =
                     super::common_deserializers::read_pascal_string(socket_reader).await?;
-                Ok(TcpContract::Unsubscribe(table_name))
+                Ok(Self::Unsubscribe(table_name))
             }
             COMPRESSED_PAYLOAD => {
                 let data = socket_reader.read_byte_array().await?;
-                Ok(TcpContract::CompressedPayload(data))
+                Ok(Self::CompressedPayload(data))
             }
             _ => Err(ReadingTcpContractFail::InvalidPacketId(packet_no)),
         };
@@ -204,26 +204,26 @@ impl TcpContract {
 
     pub fn serialize_into(&self, buffer: &mut Vec<u8>) {
         match self {
-            TcpContract::Ping => {
+            Self::Ping => {
                 buffer.push(PING);
             }
-            TcpContract::Pong => {
+            Self::Pong => {
                 buffer.push(PONG);
             }
-            TcpContract::Greeting { name } => {
+            Self::Greeting { name } => {
                 buffer.push(GREETING);
                 crate::common_serializers::serialize_pascal_string(buffer, name);
             }
-            TcpContract::Subscribe { table_name } => {
+            Self::Subscribe { table_name } => {
                 buffer.push(SUBSCRIBE);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name);
             }
-            TcpContract::InitTable { table_name, data } => {
+            Self::InitTable { table_name, data } => {
                 buffer.push(INIT_TABLE);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name);
                 crate::common_serializers::serialize_byte_array(buffer, data.as_slice());
             }
-            TcpContract::InitPartition {
+            Self::InitPartition {
                 table_name,
                 partition_key,
                 data,
@@ -233,12 +233,12 @@ impl TcpContract {
                 crate::common_serializers::serialize_pascal_string(buffer, partition_key);
                 crate::common_serializers::serialize_byte_array(buffer, data.as_slice());
             }
-            TcpContract::UpdateRows { table_name, data } => {
+            Self::UpdateRows { table_name, data } => {
                 buffer.push(UPDATE_ROWS);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name);
                 crate::common_serializers::serialize_byte_array(buffer, data.as_slice());
             }
-            TcpContract::DeleteRows { table_name, rows } => {
+            Self::DeleteRows { table_name, rows } => {
                 buffer.push(DELETE_ROWS);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name);
                 crate::common_serializers::serialize_i32(buffer, rows.len() as i32);
@@ -247,14 +247,14 @@ impl TcpContract {
                     row.serialize(buffer);
                 }
             }
-            TcpContract::Error { message } => {
+            Self::Error { message } => {
                 buffer.push(ERROR);
                 // Version=0; Means we have one field - message;
                 buffer.push(0);
                 crate::common_serializers::serialize_pascal_string(buffer, message);
             }
 
-            TcpContract::GreetingFromNode {
+            Self::GreetingFromNode {
                 node_location,
                 node_version,
                 compress,
@@ -273,27 +273,27 @@ impl TcpContract {
                 }
             }
 
-            TcpContract::SubscribeAsNode(table_name) => {
+            Self::SubscribeAsNode(table_name) => {
                 buffer.push(SUBSCRIBE_AS_NODE);
                 // Protocol version
                 buffer.push(0);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
             }
 
-            TcpContract::TableNotFound(table_name) => {
+            Self::TableNotFound(table_name) => {
                 buffer.push(TABLES_NOT_FOUND);
                 // Protocol version
                 buffer.push(0);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
             }
 
-            TcpContract::Unsubscribe(table_name) => {
+            Self::Unsubscribe(table_name) => {
                 buffer.push(UNSUBSCRIBE);
                 // Protocol version
                 buffer.push(0);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
             }
-            TcpContract::CompressedPayload(payload) => {
+            Self::CompressedPayload(payload) => {
                 buffer.push(COMPRESSED_PAYLOAD);
                 crate::common_serializers::serialize_byte_array(buffer, payload.as_slice());
             }
@@ -301,10 +301,10 @@ impl TcpContract {
     }
 }
 
-impl my_tcp_sockets::tcp_connection::TcpContract for TcpContract {
+impl my_tcp_sockets::tcp_connection::TcpContract for MyNoSqlTcpContract {
     fn is_pong(&self) -> bool {
         match self {
-            TcpContract::Pong => true,
+            Self::Pong => true,
             _ => false,
         }
     }

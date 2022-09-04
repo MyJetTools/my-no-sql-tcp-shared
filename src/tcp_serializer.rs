@@ -3,7 +3,7 @@ use my_tcp_sockets::{
     TcpSocketSerializer,
 };
 
-use crate::TcpContract;
+use crate::MyNoSqlTcpContract;
 
 pub struct MyNoSqlReaderTcpSerializer {}
 
@@ -14,27 +14,27 @@ impl MyNoSqlReaderTcpSerializer {
 }
 
 #[async_trait::async_trait]
-impl TcpSocketSerializer<TcpContract> for MyNoSqlReaderTcpSerializer {
-    fn serialize(&self, contract: TcpContract) -> Vec<u8> {
+impl TcpSocketSerializer<MyNoSqlTcpContract> for MyNoSqlReaderTcpSerializer {
+    fn serialize(&self, contract: MyNoSqlTcpContract) -> Vec<u8> {
         contract.serialize()
     }
 
-    fn serialize_ref(&self, contract: &TcpContract) -> Vec<u8> {
+    fn serialize_ref(&self, contract: &MyNoSqlTcpContract) -> Vec<u8> {
         contract.serialize()
     }
 
-    fn get_ping(&self) -> TcpContract {
-        TcpContract::Ping
+    fn get_ping(&self) -> MyNoSqlTcpContract {
+        MyNoSqlTcpContract::Ping
     }
 
-    fn apply_packet(&mut self, _: &TcpContract) -> bool {
+    fn apply_packet(&mut self, _: &MyNoSqlTcpContract) -> bool {
         false
     }
 
     async fn deserialize<TSocketReader: Send + Sync + 'static + SocketReader>(
         &mut self,
         socket_reader: &mut TSocketReader,
-    ) -> Result<TcpContract, ReadingTcpContractFail> {
-        TcpContract::deserialize(socket_reader).await
+    ) -> Result<MyNoSqlTcpContract, ReadingTcpContractFail> {
+        MyNoSqlTcpContract::deserialize(socket_reader).await
     }
 }
