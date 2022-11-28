@@ -15,4 +15,4 @@ rust-extensions = { tag = "0.1.2", git = "https://github.com/MyJetTools/rust-ext
 tokio = { version = "*", features = ["full"] }
 tokio-util = "*"
 async-trait = "*"
-zip = "*"
+zip = { version = "*", default-features = false, features = ["deflate"] }
