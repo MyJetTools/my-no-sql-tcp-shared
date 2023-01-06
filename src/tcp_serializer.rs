@@ -15,6 +15,7 @@ impl MyNoSqlReaderTcpSerializer {
 
 #[async_trait::async_trait]
 impl TcpSocketSerializer<MyNoSqlTcpContract> for MyNoSqlReaderTcpSerializer {
+    const PING_PACKET_IS_SINGLETONE: bool = true;
     fn serialize(&self, contract: MyNoSqlTcpContract) -> Vec<u8> {
         contract.serialize()
     }
