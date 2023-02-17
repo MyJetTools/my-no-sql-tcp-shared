@@ -48,7 +48,11 @@ pub enum MyNoSqlTcpContract {
         partition_key: String,
         row_keys: Vec<String>,
     },
-    UpdateExpirationTime {
+    UpdatePartitionsExpirationTime {
+        table_name: String,
+        partitions: Vec<(String, DateTimeAsMicroseconds)>,
+    },
+    UpdateRowsExpirationTime {
         table_name: String,
         partition_key: String,
         row_keys: Vec<String>,
@@ -315,18 +319,44 @@ impl MyNoSqlTcpContract {
                 row_keys,
             } => {
                 buffer.push(UPDATE_LAST_READ_TIME);
+                crate::common_serializers::serialize_byte(buffer, 0); // Protocol version
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
                 crate::common_serializers::serialize_pascal_string(buffer, &partition_key.as_str());
                 crate::common_serializers::serialize_list_of_pascal_strings(buffer, row_keys);
             }
 
-            Self::UpdateExpirationTime {
+            Self::UpdatePartitionsExpirationTime {
+                table_name,
+                partitions,
+            } => {
+                buffer.push(UPDATE_PARTITIONS_EXPIRATION_TIME);
+                crate::common_serializers::serialize_byte(buffer, 0); // Protocol version
+                crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
+
+                let amount = partitions.len() as i32;
+
+                crate::common_serializers::serialize_i32(buffer, amount);
+
+                for (partition_key, expiration_time) in partitions {
+                    crate::common_serializers::serialize_pascal_string(
+                        buffer,
+                        partition_key.as_str(),
+                    );
+                    crate::common_serializers::serialize_i64(
+                        buffer,
+                        expiration_time.unix_microseconds,
+                    );
+                }
+            }
+
+            Self::UpdateRowsExpirationTime {
                 table_name,
                 partition_key,
                 row_keys,
                 expiration_time,
             } => {
-                buffer.push(UPDATE_LAST_READ_TIME);
+                buffer.push(UPDATE_ROWS_EXPIRATION_TIME);
+                crate::common_serializers::serialize_byte(buffer, 0);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
                 crate::common_serializers::serialize_pascal_string(buffer, &partition_key.as_str());
                 crate::common_serializers::serialize_list_of_pascal_strings(buffer, row_keys);
