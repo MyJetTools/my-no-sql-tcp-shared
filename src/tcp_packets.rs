@@ -12,3 +12,5 @@ pub const SUBSCRIBE_AS_NODE: u8 = 10;
 pub const TABLES_NOT_FOUND: u8 = 11;
 pub const UNSUBSCRIBE: u8 = 12;
 pub const COMPRESSED_PAYLOAD: u8 = 13;
+pub const UPDATE_LAST_READ_TIME: u8 = 14;
+pub const UPDATE_EXPIRATION_TIME: u8 = 15;

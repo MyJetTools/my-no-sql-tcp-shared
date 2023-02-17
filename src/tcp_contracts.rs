@@ -1,4 +1,5 @@
 use my_tcp_sockets::socket_reader::{ReadingTcpContractFail, SocketReader, SocketReaderInMem};
+use rust_extensions::date_time::DateTimeAsMicroseconds;
 
 use crate::{tcp_packets::*, DeleteRowTcpContract};
 
@@ -42,6 +43,17 @@ pub enum MyNoSqlTcpContract {
     Unsubscribe(String),
     TableNotFound(String),
     CompressedPayload(Vec<u8>),
+    UpdateLastReadTime {
+        table_name: String,
+        partition_key: String,
+        row_keys: Vec<String>,
+    },
+    UpdateExpirationTime {
+        table_name: String,
+        partition_key: String,
+        row_keys: Vec<String>,
+        expiration_time: DateTimeAsMicroseconds,
+    },
 }
 
 impl MyNoSqlTcpContract {
@@ -296,6 +308,29 @@ impl MyNoSqlTcpContract {
             Self::CompressedPayload(payload) => {
                 buffer.push(COMPRESSED_PAYLOAD);
                 crate::common_serializers::serialize_byte_array(buffer, payload.as_slice());
+            }
+            Self::UpdateLastReadTime {
+                table_name,
+                partition_key,
+                row_keys,
+            } => {
+                buffer.push(UPDATE_LAST_READ_TIME);
+                crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
+                crate::common_serializers::serialize_pascal_string(buffer, &partition_key.as_str());
+                crate::common_serializers::serialize_list_of_pascal_strings(buffer, row_keys);
+            }
+
+            Self::UpdateExpirationTime {
+                table_name,
+                partition_key,
+                row_keys,
+                expiration_time,
+            } => {
+                buffer.push(UPDATE_LAST_READ_TIME);
+                crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
+                crate::common_serializers::serialize_pascal_string(buffer, &partition_key.as_str());
+                crate::common_serializers::serialize_list_of_pascal_strings(buffer, row_keys);
+                crate::common_serializers::serialize_i64(buffer, expiration_time.unix_microseconds);
             }
         }
     }

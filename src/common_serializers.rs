@@ -35,6 +35,15 @@ pub fn serialize_list_of_arrays(data: &mut Vec<u8>, v: &Vec<Vec<u8>>) {
     }
 }
 
+pub fn serialize_list_of_pascal_strings(data: &mut Vec<u8>, v: &Vec<String>) {
+    let array_len = v.len() as i32;
+    serialize_i32(data, array_len);
+
+    for str in v {
+        serialize_pascal_string(data, str);
+    }
+}
+
 pub fn serialize_byte_array(data: &mut Vec<u8>, v: &[u8]) {
     let array_len = v.len() as i32;
     serialize_i32(data, array_len);
