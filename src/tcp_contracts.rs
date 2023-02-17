@@ -44,19 +44,25 @@ pub enum MyNoSqlTcpContract {
     TableNotFound(String),
     CompressedPayload(Vec<u8>),
     UpdateLastReadTime {
+        confirmation_id: i64,
         table_name: String,
         partition_key: String,
         row_keys: Vec<String>,
     },
     UpdatePartitionsExpirationTime {
+        confirmation_id: i64,
         table_name: String,
         partitions: Vec<(String, DateTimeAsMicroseconds)>,
     },
     UpdateRowsExpirationTime {
+        confirmation_id: i64,
         table_name: String,
         partition_key: String,
         row_keys: Vec<String>,
         expiration_time: DateTimeAsMicroseconds,
+    },
+    Confirmation {
+        confirmation_id: i64,
     },
 }
 
@@ -315,11 +321,13 @@ impl MyNoSqlTcpContract {
             }
             Self::UpdateLastReadTime {
                 table_name,
+                confirmation_id,
                 partition_key,
                 row_keys,
             } => {
                 buffer.push(UPDATE_LAST_READ_TIME);
                 crate::common_serializers::serialize_byte(buffer, 0); // Protocol version
+                crate::common_serializers::serialize_i64(buffer, *confirmation_id);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
                 crate::common_serializers::serialize_pascal_string(buffer, &partition_key.as_str());
                 crate::common_serializers::serialize_list_of_pascal_strings(buffer, row_keys);
@@ -327,10 +335,12 @@ impl MyNoSqlTcpContract {
 
             Self::UpdatePartitionsExpirationTime {
                 table_name,
+                confirmation_id,
                 partitions,
             } => {
                 buffer.push(UPDATE_PARTITIONS_EXPIRATION_TIME);
                 crate::common_serializers::serialize_byte(buffer, 0); // Protocol version
+                crate::common_serializers::serialize_i64(buffer, *confirmation_id);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
 
                 let amount = partitions.len() as i32;
@@ -351,16 +361,24 @@ impl MyNoSqlTcpContract {
 
             Self::UpdateRowsExpirationTime {
                 table_name,
+                confirmation_id,
                 partition_key,
                 row_keys,
                 expiration_time,
             } => {
                 buffer.push(UPDATE_ROWS_EXPIRATION_TIME);
-                crate::common_serializers::serialize_byte(buffer, 0);
+                crate::common_serializers::serialize_byte(buffer, 0); // Protocol version
+                crate::common_serializers::serialize_i64(buffer, *confirmation_id);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
                 crate::common_serializers::serialize_pascal_string(buffer, &partition_key.as_str());
                 crate::common_serializers::serialize_list_of_pascal_strings(buffer, row_keys);
                 crate::common_serializers::serialize_i64(buffer, expiration_time.unix_microseconds);
+            }
+
+            Self::Confirmation { confirmation_id } => {
+                buffer.push(CONFIRMATION);
+                crate::common_serializers::serialize_byte(buffer, 0); // Protocol version
+                crate::common_serializers::serialize_i64(buffer, *confirmation_id);
             }
         }
     }
