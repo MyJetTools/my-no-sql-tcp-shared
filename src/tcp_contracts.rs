@@ -43,7 +43,12 @@ pub enum MyNoSqlTcpContract {
     Unsubscribe(String),
     TableNotFound(String),
     CompressedPayload(Vec<u8>),
-    UpdateLastReadTime {
+    UpdatePartitionsLastReadTime {
+        confirmation_id: i64,
+        table_name: String,
+        partitions: Vec<String>,
+    },
+    UpdateRowsLastReadTime {
         confirmation_id: i64,
         table_name: String,
         partition_key: String,
@@ -319,13 +324,24 @@ impl MyNoSqlTcpContract {
                 buffer.push(COMPRESSED_PAYLOAD);
                 crate::common_serializers::serialize_byte_array(buffer, payload.as_slice());
             }
-            Self::UpdateLastReadTime {
+            Self::UpdatePartitionsLastReadTime {
+                table_name,
+                confirmation_id,
+                partitions,
+            } => {
+                buffer.push(UPDATE_ROWS_LAST_READ_TIME);
+                crate::common_serializers::serialize_byte(buffer, 0); // Protocol version
+                crate::common_serializers::serialize_i64(buffer, *confirmation_id);
+                crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
+                crate::common_serializers::serialize_list_of_pascal_strings(buffer, partitions);
+            }
+            Self::UpdateRowsLastReadTime {
                 table_name,
                 confirmation_id,
                 partition_key,
                 row_keys,
             } => {
-                buffer.push(UPDATE_LAST_READ_TIME);
+                buffer.push(UPDATE_ROWS_LAST_READ_TIME);
                 crate::common_serializers::serialize_byte(buffer, 0); // Protocol version
                 crate::common_serializers::serialize_i64(buffer, *confirmation_id);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
