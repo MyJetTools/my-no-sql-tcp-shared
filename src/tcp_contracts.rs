@@ -57,7 +57,7 @@ pub enum MyNoSqlTcpContract {
     UpdatePartitionsExpirationTime {
         confirmation_id: i64,
         table_name: String,
-        partitions: Vec<(String, DateTimeAsMicroseconds)>,
+        partitions: Vec<(String, Option<DateTimeAsMicroseconds>)>,
     },
     UpdateRowsExpirationTime {
         confirmation_id: i64,
@@ -368,10 +368,14 @@ impl MyNoSqlTcpContract {
                         buffer,
                         partition_key.as_str(),
                     );
-                    crate::common_serializers::serialize_i64(
-                        buffer,
-                        expiration_time.unix_microseconds,
-                    );
+
+                    let value = if let Some(expiration_time) = expiration_time {
+                        expiration_time.unix_microseconds
+                    } else {
+                        0
+                    };
+
+                    crate::common_serializers::serialize_i64(buffer, value);
                 }
             }
 
