@@ -64,7 +64,7 @@ pub enum MyNoSqlTcpContract {
         table_name: String,
         partition_key: String,
         row_keys: Vec<String>,
-        expiration_time: DateTimeAsMicroseconds,
+        expiration_time: Option<DateTimeAsMicroseconds>,
     },
     Confirmation {
         confirmation_id: i64,
@@ -218,6 +218,90 @@ impl MyNoSqlTcpContract {
                 let data = socket_reader.read_byte_array().await?;
                 Ok(Self::CompressedPayload(data))
             }
+            UPDATE_PARTITIONS_LAST_READ_TIME => {
+                let _protocol_version = socket_reader.read_byte().await?;
+                let confirmation_id = socket_reader.read_i64().await?;
+                let table_name =
+                    super::common_deserializers::read_pascal_string(socket_reader).await?;
+
+                let partitions =
+                    super::common_deserializers::read_list_of_pascal_strings(socket_reader).await?;
+
+                Ok(Self::UpdatePartitionsLastReadTime {
+                    confirmation_id,
+                    table_name,
+                    partitions,
+                })
+            }
+            UPDATE_ROWS_LAST_READ_TIME => {
+                let _protocol_version = socket_reader.read_byte().await?;
+                let confirmation_id = socket_reader.read_i64().await?;
+                let table_name =
+                    super::common_deserializers::read_pascal_string(socket_reader).await?;
+
+                let partition_key =
+                    super::common_deserializers::read_pascal_string(socket_reader).await?;
+
+                let row_keys =
+                    super::common_deserializers::read_list_of_pascal_strings(socket_reader).await?;
+
+                Ok(Self::UpdateRowsLastReadTime {
+                    confirmation_id,
+                    table_name,
+                    partition_key,
+                    row_keys,
+                })
+            }
+
+            UPDATE_PARTITIONS_EXPIRATION_TIME => {
+                let _protocol_version = socket_reader.read_byte().await?;
+                let confirmation_id = socket_reader.read_i64().await?;
+                let table_name =
+                    super::common_deserializers::read_pascal_string(socket_reader).await?;
+
+                let amount = socket_reader.read_i32().await? as usize;
+
+                let mut partitions = Vec::with_capacity(amount);
+
+                for _ in 0..amount {
+                    let partition_key =
+                        super::common_deserializers::read_pascal_string(socket_reader).await?;
+                    let expiration_time =
+                        super::common_deserializers::read_date_time_opt(socket_reader).await?;
+
+                    partitions.push((partition_key, expiration_time));
+                }
+
+                Ok(Self::UpdatePartitionsExpirationTime {
+                    confirmation_id,
+                    table_name,
+                    partitions,
+                })
+            }
+
+            UPDATE_ROWS_EXPIRATION_TIME => {
+                let _protocol_version = socket_reader.read_byte().await?;
+                let confirmation_id = socket_reader.read_i64().await?;
+                let table_name =
+                    super::common_deserializers::read_pascal_string(socket_reader).await?;
+
+                let partition_key =
+                    super::common_deserializers::read_pascal_string(socket_reader).await?;
+
+                let row_keys =
+                    super::common_deserializers::read_list_of_pascal_strings(socket_reader).await?;
+
+                let expiration_time =
+                    super::common_deserializers::read_date_time_opt(socket_reader).await?;
+
+                Ok(Self::UpdateRowsExpirationTime {
+                    confirmation_id,
+                    table_name,
+                    partition_key,
+                    row_keys,
+                    expiration_time: expiration_time,
+                })
+            }
             _ => Err(ReadingTcpContractFail::InvalidPacketId(packet_no)),
         };
 
@@ -329,7 +413,7 @@ impl MyNoSqlTcpContract {
                 confirmation_id,
                 partitions,
             } => {
-                buffer.push(UPDATE_ROWS_LAST_READ_TIME);
+                buffer.push(UPDATE_PARTITIONS_LAST_READ_TIME);
                 crate::common_serializers::serialize_byte(buffer, 0); // Protocol version
                 crate::common_serializers::serialize_i64(buffer, *confirmation_id);
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
@@ -369,13 +453,7 @@ impl MyNoSqlTcpContract {
                         partition_key.as_str(),
                     );
 
-                    let value = if let Some(expiration_time) = expiration_time {
-                        expiration_time.unix_microseconds
-                    } else {
-                        0
-                    };
-
-                    crate::common_serializers::serialize_i64(buffer, value);
+                    crate::common_serializers::serialize_date_time_opt(buffer, *expiration_time);
                 }
             }
 
@@ -392,7 +470,7 @@ impl MyNoSqlTcpContract {
                 crate::common_serializers::serialize_pascal_string(buffer, table_name.as_str());
                 crate::common_serializers::serialize_pascal_string(buffer, &partition_key.as_str());
                 crate::common_serializers::serialize_list_of_pascal_strings(buffer, row_keys);
-                crate::common_serializers::serialize_i64(buffer, expiration_time.unix_microseconds);
+                crate::common_serializers::serialize_date_time_opt(buffer, *expiration_time);
             }
 
             Self::Confirmation { confirmation_id } => {

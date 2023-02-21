@@ -1,5 +1,7 @@
 use std::str;
 
+use rust_extensions::date_time::DateTimeAsMicroseconds;
+
 pub fn serialize_byte(data: &mut Vec<u8>, v: u8) {
     data.push(v);
 }
@@ -18,6 +20,14 @@ pub fn serialize_i32(data: &mut Vec<u8>, v: i32) {
 
 pub fn serialize_i64(data: &mut Vec<u8>, v: i64) {
     data.extend(&v.to_le_bytes());
+}
+
+pub fn serialize_date_time_opt(data: &mut Vec<u8>, v: Option<DateTimeAsMicroseconds>) {
+    if let Some(v) = v {
+        serialize_i64(data, v.unix_microseconds);
+    } else {
+        serialize_i64(data, 0);
+    }
 }
 
 pub fn serialize_pascal_string(data: &mut Vec<u8>, str: &str) {
