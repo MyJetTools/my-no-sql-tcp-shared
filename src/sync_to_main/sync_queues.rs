@@ -115,7 +115,7 @@ impl SyncToMainNodeQueues {
         table_name: &str,
         partition_key: &String,
         row_keys: impl Fn() -> TRowKeys,
-        data: UpdateEntityStatisticsData,
+        data: &UpdateEntityStatisticsData,
     ) {
         if !data.has_data_to_update() {
             return;
