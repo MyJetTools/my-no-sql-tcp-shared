@@ -110,6 +110,55 @@ impl SyncToMainNodeQueues {
         }
     }
 
+    pub async fn update<'s, TRowKeys: Iterator<Item = &'s String>>(
+        &self,
+        table_name: &str,
+        partition_key: &String,
+        row_keys: impl Fn() -> TRowKeys,
+        data: UpdateEntityStatisticsData,
+    ) {
+        if !data.has_data_to_update() {
+            return;
+        }
+
+        let mut inner = self.inner.lock().await;
+
+        if data.partition_last_read_moment {
+            inner
+                .update_partitions_last_read_time_queue
+                .add_partition(table_name, partition_key);
+
+            self.event_loop.send(SyncToMainNodeEvent::PingToDeliver);
+        }
+
+        if let Some(partition_expiration) = data.partition_expiration_moment {
+            inner.update_partition_expiration_time_update.add(
+                table_name,
+                partition_key,
+                partition_expiration,
+            );
+
+            self.event_loop.send(SyncToMainNodeEvent::PingToDeliver);
+        }
+
+        if data.row_last_read_moment {
+            if data.row_last_read_moment {
+                inner
+                    .update_rows_last_read_time_queue
+                    .add(table_name, partition_key, row_keys());
+            }
+        }
+
+        if let Some(row_expiration) = data.row_expiration_moment {
+            inner.update_rows_expiration_time_queue.add(
+                table_name,
+                partition_key,
+                row_keys(),
+                row_expiration,
+            );
+        }
+    }
+
     pub async fn update_partition_expiration_time(
         &self,
         table_name: &str,

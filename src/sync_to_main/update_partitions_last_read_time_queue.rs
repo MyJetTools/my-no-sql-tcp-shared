@@ -44,6 +44,25 @@ impl UpdatePartitionsLastReadTimeQueue {
         });
     }
 
+    pub fn add_partition(&mut self, table_name: &str, partition_key: &str) {
+        if let Some(item) = self
+            .queue
+            .iter_mut()
+            .find(|itm| itm.table_name == table_name)
+        {
+            item.partitions.insert(partition_key.to_string(), ());
+        }
+
+        let mut partitions = HashMap::new();
+
+        partitions.insert(partition_key.to_string(), ());
+
+        self.queue.push_back(UpdatePartitionsLastReadTimeEvent {
+            table_name: table_name.to_string(),
+            partitions,
+        });
+    }
+
     pub fn return_event(&mut self, event: UpdatePartitionsLastReadTimeEvent) {
         self.queue.push_back(event);
     }

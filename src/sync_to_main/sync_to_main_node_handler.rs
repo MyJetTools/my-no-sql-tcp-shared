@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use rust_extensions::{events_loop::EventsLoopTick, ApplicationStates, Logger};
 
-use crate::{sync_to_main::DeliverToMainNodeEvent, MyNoSqlTcpContract};
+use crate::sync_to_main::DeliverToMainNodeEvent;
 
 use super::{DataReaderTcpConnection, SyncToMainNodeEvent, SyncToMainNodeQueues};
 
