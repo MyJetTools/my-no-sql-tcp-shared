@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use rust_extensions::{events_loop::EventsLoopTick, ApplicationStates, Logger};
 
-use crate::sync_to_main::DeliverToMainNodeEvent;
+use crate::{sync_to_main::DeliverToMainNodeEvent, MyNoSqlTcpContract};
 
-use super::{SyncToMainNodeEvent, SyncToMainNodeQueues};
+use super::{DataReaderTcpConnection, SyncToMainNodeEvent, SyncToMainNodeQueues};
 
 pub struct SyncToMainNodelHandler {
     pub event_notifier: Arc<SyncToMainNodeQueues>,
@@ -31,6 +31,24 @@ impl SyncToMainNodelHandler {
             .event_loop
             .start(app_states, logger)
             .await
+    }
+
+    pub fn tcp_events_pusher_new_connection_established(
+        &self,
+        connection: Arc<DataReaderTcpConnection>,
+    ) {
+        self.event_notifier
+            .event_loop
+            .send(SyncToMainNodeEvent::Connected(connection));
+    }
+
+    pub fn event_events_pusher_connection_disconnected(
+        &self,
+        connection: Arc<DataReaderTcpConnection>,
+    ) {
+        self.event_notifier
+            .event_loop
+            .send(SyncToMainNodeEvent::Disconnected(connection));
     }
 }
 
