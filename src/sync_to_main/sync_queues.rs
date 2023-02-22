@@ -110,7 +110,7 @@ impl SyncToMainNodeQueues {
         }
     }
 
-    pub async fn update<'s, TRowKeys: Iterator<Item = &'s String>>(
+    pub async fn update<'s, TRowKeys: Iterator<Item = &'s str>>(
         &self,
         table_name: &str,
         partition_key: &String,
@@ -182,9 +182,12 @@ impl SyncToMainNodeQueues {
         date_time: Option<DateTimeAsMicroseconds>,
     ) {
         let mut inner = self.inner.lock().await;
-        inner
-            .update_rows_expiration_time_queue
-            .add(table_name, partition_key, row_keys, date_time);
+        inner.update_rows_expiration_time_queue.add(
+            table_name,
+            partition_key,
+            row_keys.map(|itm| itm.as_str()),
+            date_time,
+        );
 
         self.event_loop.send(SyncToMainNodeEvent::PingToDeliver);
     }
@@ -196,9 +199,11 @@ impl SyncToMainNodeQueues {
         row_keys: TRowKeys,
     ) {
         let mut inner = self.inner.lock().await;
-        inner
-            .update_rows_last_read_time_queue
-            .add(table_name, partition_key, row_keys);
+        inner.update_rows_last_read_time_queue.add(
+            table_name,
+            partition_key,
+            row_keys.map(|itm| itm.as_str()),
+        );
 
         self.event_loop.send(SyncToMainNodeEvent::PingToDeliver);
     }

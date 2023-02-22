@@ -21,7 +21,7 @@ impl UpdateRowsExpirationTimeQueue {
         }
     }
 
-    pub fn add<'s, TRowKeys: Iterator<Item = &'s String>>(
+    pub fn add<'s, TRowKeys: Iterator<Item = &'s str>>(
         &mut self,
         table_name: &str,
         partition_key: &str,
