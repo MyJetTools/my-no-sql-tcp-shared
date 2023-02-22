@@ -42,13 +42,19 @@ impl SyncToMainNodelHandler {
             .send(SyncToMainNodeEvent::Connected(connection));
     }
 
-    pub fn event_events_pusher_connection_disconnected(
+    pub fn tcp_events_pusher_connection_disconnected(
         &self,
         connection: Arc<DataReaderTcpConnection>,
     ) {
         self.event_notifier
             .event_loop
             .send(SyncToMainNodeEvent::Disconnected(connection));
+    }
+
+    pub fn tcp_events_pusher_got_confirmation(&self, confirmation_id: i64) {
+        self.event_notifier
+            .event_loop
+            .send(SyncToMainNodeEvent::Delivered(confirmation_id));
     }
 }
 
