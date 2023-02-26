@@ -302,6 +302,12 @@ impl MyNoSqlTcpContract {
                     expiration_time: expiration_time,
                 })
             }
+
+            CONFIRMATION => {
+                let _protocol_version = socket_reader.read_byte().await?;
+                let confirmation_id = socket_reader.read_i64().await?;
+                Ok(Self::Confirmation { confirmation_id })
+            }
             _ => Err(ReadingTcpContractFail::InvalidPacketId(packet_no)),
         };
 
