@@ -146,6 +146,7 @@ impl SyncToMainNodeQueues {
                 inner
                     .update_rows_last_read_time_queue
                     .add(table_name, partition_key, row_keys());
+                self.event_loop.send(SyncToMainNodeEvent::PingToDeliver);
             }
         }
 
@@ -156,6 +157,8 @@ impl SyncToMainNodeQueues {
                 row_keys(),
                 row_expiration,
             );
+
+            self.event_loop.send(SyncToMainNodeEvent::PingToDeliver);
         }
     }
 
