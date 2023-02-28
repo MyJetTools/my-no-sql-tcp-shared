@@ -113,7 +113,7 @@ impl SyncToMainNodeQueues {
     pub async fn update<'s, TRowKeys: Iterator<Item = &'s str>>(
         &self,
         table_name: &str,
-        partition_key: &String,
+        partition_key: &str,
         row_keys: impl Fn() -> TRowKeys,
         data: &UpdateEntityStatisticsData,
     ) {
