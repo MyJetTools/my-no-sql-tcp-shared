@@ -6,11 +6,11 @@ use crate::sync_to_main::DeliverToMainNodeEvent;
 
 use super::{DataReaderTcpConnection, SyncToMainNodeEvent, SyncToMainNodeQueues};
 
-pub struct SyncToMainNodelHandler {
+pub struct SyncToMainNodeHandler {
     pub event_notifier: Arc<SyncToMainNodeQueues>,
 }
 
-impl SyncToMainNodelHandler {
+impl SyncToMainNodeHandler {
     pub fn new() -> Self {
         Self {
             event_notifier: Arc::new(SyncToMainNodeQueues::new()),
